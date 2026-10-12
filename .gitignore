@@ -1,0 +1,71 @@
+# ======================================
+# STM32 CubeMX + CMake
+# ======================================
+# CubeMX 临时、用户配置缓存
+/.cubemx/
+*.ioc.backup
+*.ioc.bak
+*.mxproject
+# CubeMX自动生成的日志
+cubemx.log
+
+# CMake 构建输出目录（最核心！）
+build/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+
+# 编译产物
+*.elf
+*.hex
+*.bin
+*.map
+*.o
+*.obj
+*.su
+*.s
+*.lst
+*.dis
+*.axf
+
+# 链接、编译临时文件
+*.d
+*.dep
+*.gch
+*.i
+*.ii
+
+# STM32CubeIDE 残留（就算不用IDE，CubeMX也会生成）
+.idea/
+.vscode/
+# 如果你需要保留vscode配置，删除 .vscode/ 这一行
+.project
+.cproject
+.launch
+*.launch
+# STM32CubeIDE 工程缓存
+Debug/
+Release/
+
+# 调试相关
+*.gdb
+*.gdbscript
+
+# 系统文件
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# 编辑器临时文件
+*.swp
+*.swo
+*.bak
+*~
+
+# 私有环境变量、密钥
+.env
+
+#忽略docs文件夹
+docs/
