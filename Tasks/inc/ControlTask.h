@@ -1,7 +1,7 @@
 #ifndef CONTROLTASK_H
 #define CONTROLTASK_H
 
-#include <cstdint>
+#include <stdint.h>
 
 // 供 C 中断处理(stm32f4xx_it.c 及 HAL 弱回调)调用的接口
 #ifdef __cplusplus
@@ -15,8 +15,16 @@ void ControlTaskInit(void);
 // 1kHz 控制入口, 在 TIM6 周期中断(HAL_TIM_PeriodElapsedCallback)中调用
 void MainTask(void);
 
-// CAN 接收回调, 在 HAL_CAN_RxFifo0MsgPendingCallback 中调用
-void CanFeedbackCallback(uint32_t std_id, const uint8_t *data);
+/* Ozone symbols: rpm, raw current command (16384 = 3 A), milliseconds.
+ * Default disabled: set control_enabled=1 only when ready to run the motor. */
+extern volatile uint32_t control_enabled;
+extern volatile float speed_target_rpm;
+extern volatile float speed_feedback_rpm;
+extern volatile float speed_error_rpm;
+extern volatile float current_command_raw;
+extern volatile uint32_t feedback_count;
+extern volatile uint32_t feedback_age_ms;
+extern volatile uint32_t feedback_valid;
 
 #ifdef __cplusplus
 }

@@ -45,6 +45,18 @@ void MX_CAN2_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
+/* Call once after both MX_CANx_Init functions. */
+void CAN_Start(void);
+/* Nonblocking enqueue; HAL_OK means queued, HAL_BUSY means all mailboxes full.
+ * Serialize callers on each bus (do not call concurrently from main and ISR). */
+HAL_StatusTypeDef CAN_SendStd(CAN_HandleTypeDef *hcan, uint16_t id,
+                              const uint8_t *data, uint8_t length);
+/* Runs in RX interrupt context. Do not block; copy data before returning.
+ * The default weak implementation discards frames. Override with C linkage. */
+void CAN_ReceiveCallback(CAN_HandleTypeDef *hcan,
+                         const CAN_RxHeaderTypeDef *header,
+                         const uint8_t *data);
+
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

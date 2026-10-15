@@ -1,0 +1,14 @@
+// Opening this project loads symbols only; it does not connect or run the target.
+void OnProjectLoad(void) {
+  Project.SetDevice("STM32F407IG");
+  Project.SetHostIF("USB", "0");
+  Project.SetTargetIF("SWD");
+  Project.SetTIFSpeed("1 MHz");
+  File.Open("../build/project.elf");
+  Window.Add("Data Sampling", "speed_feedback_rpm");
+  Window.Add("Data Sampling", "speed_target_rpm");
+  Window.Add("Data Sampling", "current_command_raw");
+  Window.Add("Data Sampling", "feedback_valid");
+  Window.Show("Data Sampling");
+  Window.Show("Timeline");
+}

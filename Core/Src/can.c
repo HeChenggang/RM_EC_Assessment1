@@ -42,10 +42,10 @@ void MX_CAN1_Init(void)
   hcan1.Init.Prescaler = 3;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan1.Init.TimeSeg1 = CAN_BS1_6TQ;
-  hcan1.Init.TimeSeg2 = CAN_BS2_7TQ;
+  hcan1.Init.TimeSeg1 = CAN_BS1_11TQ;
+  hcan1.Init.TimeSeg2 = CAN_BS2_2TQ;
   hcan1.Init.TimeTriggeredMode = DISABLE;
-  hcan1.Init.AutoBusOff = DISABLE;
+  hcan1.Init.AutoBusOff = ENABLE;
   hcan1.Init.AutoWakeUp = DISABLE;
   hcan1.Init.AutoRetransmission = ENABLE;
   hcan1.Init.ReceiveFifoLocked = DISABLE;
@@ -74,10 +74,10 @@ void MX_CAN2_Init(void)
   hcan2.Init.Prescaler = 3;
   hcan2.Init.Mode = CAN_MODE_NORMAL;
   hcan2.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan2.Init.TimeSeg1 = CAN_BS1_6TQ;
-  hcan2.Init.TimeSeg2 = CAN_BS2_7TQ;
+  hcan2.Init.TimeSeg1 = CAN_BS1_11TQ;
+  hcan2.Init.TimeSeg2 = CAN_BS2_2TQ;
   hcan2.Init.TimeTriggeredMode = DISABLE;
-  hcan2.Init.AutoBusOff = DISABLE;
+  hcan2.Init.AutoBusOff = ENABLE;
   hcan2.Init.AutoWakeUp = DISABLE;
   hcan2.Init.AutoRetransmission = ENABLE;
   hcan2.Init.ReceiveFifoLocked = DISABLE;
@@ -214,6 +214,98 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
 }
 
 /* USER CODE BEGIN 1 */
+
+/* APB1 = 42 MHz: 42 MHz / (3 * (1 + 11 + 2)) = 1 Mbps.
+ * Shared filter banks: CAN1 owns 0..13, CAN2 owns 14..27. */
+void CAN_Start(void)
+{
+  CAN_FilterTypeDef filter = {0};
+  filter.FilterMode = CAN_FILTERMODE_IDMASK;
+  filter.FilterScale = CAN_FILTERSCALE_32BIT;
+  /* Match IDE=0 and RTR=0; accept all standard data identifiers. */
+  filter.FilterMaskIdLow = 0x0006U;
+  filter.FilterActivation = ENABLE;
+  filter.SlaveStartFilterBank = 14;
+  filter.FilterBank = 0;
+  filter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+  if (HAL_CAN_ConfigFilter(&hcan1, &filter) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  filter.FilterBank = 14;
+  filter.FilterFIFOAssignment = CAN_FILTER_FIFO1;
+  if (HAL_CAN_ConfigFilter(&hcan2, &filter) != HAL_OK ||
+      HAL_CAN_Start(&hcan1) != HAL_OK ||
+      HAL_CAN_Start(&hcan2) != HAL_OK ||
+      HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK ||
+      HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO1_MSG_PENDING) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+HAL_StatusTypeDef CAN_SendStd(CAN_HandleTypeDef *hcan, uint16_t id,
+                              const uint8_t *data, uint8_t length)
+{
+  CAN_TxHeaderTypeDef header = {0};
+  uint32_t mailbox;
+  uint8_t payload[8] = {0};
+  if ((hcan != &hcan1 && hcan != &hcan2) || id > 0x7FFU ||
+      length > 8U || (length != 0U && data == NULL))
+  {
+    return HAL_ERROR;
+  }
+  if (HAL_CAN_GetTxMailboxesFreeLevel(hcan) == 0U)
+  {
+    return HAL_BUSY;
+  }
+  header.StdId = id;
+  header.IDE = CAN_ID_STD;
+  header.RTR = CAN_RTR_DATA;
+  header.DLC = length;
+  for (uint8_t i = 0; i < length; ++i)
+  {
+    payload[i] = data[i];
+  }
+  return HAL_CAN_AddTxMessage(hcan, &header, payload, &mailbox);
+}
+
+static void CAN_DrainRx(CAN_HandleTypeDef *hcan, uint32_t fifo)
+{
+  CAN_RxHeaderTypeDef header;
+  uint8_t data[8];
+  while (HAL_CAN_GetRxFifoFillLevel(hcan, fifo) != 0U)
+  {
+    if (HAL_CAN_GetRxMessage(hcan, fifo, &header, data) != HAL_OK)
+    {
+      break;
+    }
+    if (header.IDE == CAN_ID_STD && header.RTR == CAN_RTR_DATA && header.DLC <= 8U)
+    {
+      CAN_ReceiveCallback(hcan, &header, data);
+    }
+  }
+}
+
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
+  CAN_DrainRx(hcan, CAN_RX_FIFO0);
+}
+
+void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
+  CAN_DrainRx(hcan, CAN_RX_FIFO1);
+}
+
+__weak void CAN_ReceiveCallback(CAN_HandleTypeDef *hcan,
+                                const CAN_RxHeaderTypeDef *header,
+                                const uint8_t *data)
+{
+  /* Override in application code to dispatch motor feedback. */
+  UNUSED(hcan);
+  UNUSED(header);
+  UNUSED(data);
+}
 
 /* USER CODE END 1 */
 

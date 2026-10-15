@@ -28,6 +28,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "ControlTask.h"
 
 /* USER CODE END Includes */
 
@@ -104,7 +105,7 @@ int main(void)
   MX_USART6_UART_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  ControlTaskInit();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -114,6 +115,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    HAL_IWDG_Refresh(&hiwdg);
+
   }
   /* USER CODE END 3 */
 }
