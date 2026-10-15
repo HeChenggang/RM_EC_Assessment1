@@ -6,6 +6,9 @@ void OnProjectLoad(void) {
   Project.SetTIFSpeed("1 MHz");
   File.Open("../build/project.elf");
   Window.Show("Data Sampling");
+  Window.Add("Data Sampling", "position_target_deg");
+  Window.Add("Data Sampling", "position_feedback_deg");
+  Window.Add("Data Sampling", "position_error_deg");
   Window.Add("Data Sampling", "speed_feedback_rpm");
   Window.Add("Data Sampling", "speed_target_rpm");
   Window.Add("Data Sampling", "current_command_raw");

@@ -18,6 +18,9 @@ void MainTask(void);
 /* Ozone symbols: rpm, raw current command (16384 = 3 A), milliseconds.
  * Default disabled: set control_enabled=1 only when ready to run the motor. */
 extern volatile uint32_t control_enabled;
+extern volatile float position_target_deg;
+extern volatile float position_feedback_deg;
+extern volatile float position_error_deg;
 extern volatile float speed_target_rpm;
 extern volatile float speed_feedback_rpm;
 extern volatile float speed_error_rpm;
