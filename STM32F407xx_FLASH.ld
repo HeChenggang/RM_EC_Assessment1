@@ -6,8 +6,8 @@
 **
 **  Author		: STM32CubeMX
 **
-**  Abstract    : Linker script for STM32F427IIHx series
-**                2048Kbytes FLASH and 256Kbytes RAM
+**  Abstract    : Linker script for STM32F407IGHx series
+**                1024Kbytes FLASH and 192Kbytes RAM
 **
 **                Set heap size, stack size and stack location according
 **                to application requirements.
@@ -55,9 +55,9 @@ ENTRY(Reset_Handler)
 /* Specify the memory areas */
 MEMORY
 {
-RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 192K
+RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 128K
 CCMRAM (xrw)      : ORIGIN = 0x10000000, LENGTH = 64K
-FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 2048K
+FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 1024K
 }
 
 /* Highest address of the user mode stack */

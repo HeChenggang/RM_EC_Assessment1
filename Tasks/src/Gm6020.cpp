@@ -25,8 +25,8 @@ void Gm6020::decode(const uint8_t *data) {
 
     // 跨零检测: 一圈 8192, 相邻两次采样跳变超过半圈(4096)视为跨过零点
     int16_t diff = static_cast<int16_t>(raw - last_raw_angle_);
-    if (diff > 4096)        full_turns_--;   // 8191 -> 0, 正向转过一圈
-    else if (diff < -4096)  full_turns_++;   // 0 -> 8191, 反向转过一圈
+    if (diff > 4096)        full_turns_--;   // 0 -> 8191, 反向转过一圈
+    else if (diff < -4096)  full_turns_++;   // 8191 -> 0, 正向转过一圈
 
     last_raw_angle_ = raw;
     raw_angle_      = raw;

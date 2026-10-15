@@ -57,16 +57,6 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define Laser_Pin GPIO_PIN_13
-#define Laser_GPIO_Port GPIOG
-#define YawDir_Pin GPIO_PIN_4
-#define YawDir_GPIO_Port GPIOE
-#define PitStep_Pin GPIO_PIN_13
-#define PitStep_GPIO_Port GPIOD
-#define YawStep_Pin GPIO_PIN_12
-#define YawStep_GPIO_Port GPIOD
-#define PitDir_Pin GPIO_PIN_12
-#define PitDir_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
 
