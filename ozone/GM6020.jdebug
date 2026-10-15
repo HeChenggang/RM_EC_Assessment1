@@ -5,6 +5,7 @@ void OnProjectLoad(void) {
   Project.SetTargetIF("SWD");
   Project.SetTIFSpeed("1 MHz");
   File.Open("../build/project.elf");
+  Window.Show("Data Sampling");
   Window.Add("Data Sampling", "speed_feedback_rpm");
   Window.Add("Data Sampling", "speed_target_rpm");
   Window.Add("Data Sampling", "current_command_raw");

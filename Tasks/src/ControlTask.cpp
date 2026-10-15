@@ -18,7 +18,7 @@ volatile uint32_t control_tx_failures = 0;
 
 namespace {
 // Initial bench gains, not tuned on hardware. Error in rpm, output in raw current.
-Pid speed_pid(4.0f, 8.0f, 0.0f, 1500.0f, -1500.0f);
+Pid speed_pid(28.0f, 0.8f, 0.04f, 1500.0f, -1500.0f);
 constexpr float kAmplitudeRpm = 100.0f;
 constexpr uint32_t kPeriodTicks = 4000; // 4 seconds at 1 kHz
 constexpr uint32_t kFeedbackTimeoutMs = 20;
