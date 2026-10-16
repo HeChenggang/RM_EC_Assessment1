@@ -69,3 +69,6 @@ Desktop.ini
 
 #忽略docs文件夹
 docs/
+
+#忽略ozone文件夹
+ozone/

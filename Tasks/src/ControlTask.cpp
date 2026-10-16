@@ -6,6 +6,10 @@
 
 extern "C" {
 volatile uint32_t control_enabled = 0;
+// Online tuning: edit while control_enabled=0, then re-enable to reset integrators.
+volatile float position_kp = 2.0f;
+volatile float position_ki = 0.0f;
+volatile float position_kd = 0.0f;
 volatile float position_target_deg = 0;
 volatile float position_feedback_deg = 0;
 volatile float position_error_deg = 0;
@@ -23,7 +27,7 @@ namespace {
 // Initial bench gains, not tuned on hardware. Error in rpm, output in raw current.
 Pid speed_pid(28.0f, 0.8f, 0.04f, 1500.0f, -1500.0f);
 // Position error in degrees, output in rpm; initial outer-loop P gain.
-Pid position_pid(1.0f, 0.0f, 0.0f, 60.0f, -60.0f);
+Pid position_pid(2.0f, 0.0f, 0.0f, 60.0f, -60.0f);
 constexpr float kAmplitudeDeg = 30.0f;
 float position_center_deg = 0;
 bool was_enabled = false;
@@ -98,6 +102,17 @@ extern "C" void MainTask(void)
 
     if (control_enabled) {
         if (!was_enabled) {
+            // Reject invalid debugger input; apply new gains only at enable edge.
+            const float kp = position_kp, ki = position_ki, kd = position_kd;
+            if (!std::isfinite(kp) || !std::isfinite(ki) || !std::isfinite(kd) ||
+                kp < 0.0f || kp > 10.0f || ki < 0.0f || ki > 10.0f ||
+                kd < 0.0f || kd > 1.0f) {
+                control_enabled = 0;
+                current_command_raw = 0;
+                HAL_CAN_AbortTxRequest(&hcan1, CAN_TX_MAILBOX0 | CAN_TX_MAILBOX1 | CAN_TX_MAILBOX2);
+                return;
+            }
+            position_pid.setParams(kp, ki, kd);
             position_center_deg = position;
             phase_tick = 0;
             position_pid.reset();
