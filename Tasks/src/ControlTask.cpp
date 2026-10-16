@@ -6,10 +6,15 @@
 
 extern "C" {
 volatile uint32_t control_enabled = 0;
+volatile uint32_t tuning_limit_ms = 0; // 0: run continuously until disabled or fault.
+volatile uint32_t tuning_samples = 0;
+volatile float tuning_error_square_sum = 0;
+volatile float tuning_peak_error_deg = 0;
 // Online tuning: edit while control_enabled=0, then re-enable to reset integrators.
-volatile float position_kp = 2.0f;
+volatile float position_kp = 10.0f;
 volatile float position_ki = 0.0f;
 volatile float position_kd = 0.0f;
+volatile float velocity_feedforward_gain = 2.0f;
 volatile float position_target_deg = 0;
 volatile float position_feedback_deg = 0;
 volatile float position_error_deg = 0;
@@ -27,10 +32,12 @@ namespace {
 // Initial bench gains, not tuned on hardware. Error in rpm, output in raw current.
 Pid speed_pid(28.0f, 0.8f, 0.04f, 1500.0f, -1500.0f);
 // Position error in degrees, output in rpm; initial outer-loop P gain.
-Pid position_pid(2.0f, 0.0f, 0.0f, 60.0f, -60.0f);
-constexpr float kAmplitudeDeg = 30.0f;
+Pid position_pid(10.0f, 0.0f, 0.0f, 60.0f, -60.0f);
+constexpr float kAmplitudeDeg = 60.0f;
 float position_center_deg = 0;
+float active_feedforward_gain = 0;
 bool was_enabled = false;
+uint32_t enabled_ticks = 0;
 uint16_t last_angle = 0;
 bool have_angle = false;
 constexpr uint32_t kPeriodTicks = 4000; // 4 seconds at 1 kHz
@@ -102,17 +109,23 @@ extern "C" void MainTask(void)
 
     if (control_enabled) {
         if (!was_enabled) {
+            enabled_ticks = 0;
+            tuning_samples = 0;
+            tuning_error_square_sum = 0;
+            tuning_peak_error_deg = 0;
             // Reject invalid debugger input; apply new gains only at enable edge.
             const float kp = position_kp, ki = position_ki, kd = position_kd;
+            const float ff = velocity_feedforward_gain;
             if (!std::isfinite(kp) || !std::isfinite(ki) || !std::isfinite(kd) ||
                 kp < 0.0f || kp > 10.0f || ki < 0.0f || ki > 10.0f ||
-                kd < 0.0f || kd > 1.0f) {
+                kd < 0.0f || kd > 1.0f || !std::isfinite(ff) || ff < 0 || ff > 2) {
                 control_enabled = 0;
                 current_command_raw = 0;
                 HAL_CAN_AbortTxRequest(&hcan1, CAN_TX_MAILBOX0 | CAN_TX_MAILBOX1 | CAN_TX_MAILBOX2);
                 return;
             }
             position_pid.setParams(kp, ki, kd);
+            active_feedforward_gain = ff;
             position_center_deg = position;
             phase_tick = 0;
             position_pid.reset();
@@ -121,6 +134,13 @@ extern "C" void MainTask(void)
         position_target_deg = position_center_deg + kAmplitudeDeg * std::sin(
             6.28318530718f * static_cast<float>(phase_tick) / kPeriodTicks);
         speed_target_rpm = position_pid.calc(position_target_deg, position);
+        // Analytic trajectory derivative: degrees/second divided by 6 = rpm.
+        const float omega = 6.28318530718f / (kPeriodTicks * 0.001f);
+        speed_target_rpm = speed_target_rpm + active_feedforward_gain *
+            kAmplitudeDeg * omega / 6.0f * std::cos(
+                6.28318530718f * static_cast<float>(phase_tick) / kPeriodTicks);
+        if (speed_target_rpm > 60.0f) speed_target_rpm = 60.0f;
+        if (speed_target_rpm < -60.0f) speed_target_rpm = -60.0f;
         phase_tick = (phase_tick + 1U) % kPeriodTicks;
         current_command_raw = speed_pid.calc(speed_target_rpm, rpm);
     } else {
@@ -133,6 +153,20 @@ extern "C" void MainTask(void)
     }
     speed_error_rpm = speed_target_rpm - rpm;
     position_error_deg = position_target_deg - position;
+    if (control_enabled) {
+        if (enabled_ticks != UINT32_MAX) ++enabled_ticks;
+        // Compare steady tracking over the second 4-second cycle.
+        if (enabled_ticks > 4000U && enabled_ticks <= 8000U) {
+            tuning_samples = tuning_samples + 1U;
+            tuning_error_square_sum = tuning_error_square_sum + position_error_deg * position_error_deg;
+            const float error = std::fabs(position_error_deg);
+            if (error > tuning_peak_error_deg) tuning_peak_error_deg = error;
+        }
+        if (tuning_limit_ms != 0U && enabled_ticks >= tuning_limit_ms) {
+            control_enabled = 0;
+            current_command_raw = 0;
+        }
+    }
     was_enabled = control_enabled != 0U;
 
     constexpr uint32_t mailboxes = CAN_TX_MAILBOX0 | CAN_TX_MAILBOX1 | CAN_TX_MAILBOX2;
