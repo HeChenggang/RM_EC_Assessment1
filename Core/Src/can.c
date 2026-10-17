@@ -216,13 +216,13 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
 /* USER CODE BEGIN 1 */
 
 /* APB1 = 42 MHz: 42 MHz / (3 * (1 + 11 + 2)) = 1 Mbps.
- * Shared filter banks: CAN1 owns 0..13, CAN2 owns 14..27. */
+ * 共享过滤器组：CAN1 使用第 0～13 组，CAN2 使用第 14～27 组。 */
 void CAN_Start(void)
 {
   CAN_FilterTypeDef filter = {0};
   filter.FilterMode = CAN_FILTERMODE_IDMASK;
   filter.FilterScale = CAN_FILTERSCALE_32BIT;
-  /* Match IDE=0 and RTR=0; accept all standard data identifiers. */
+  /* 匹配 IDE=0 和 RTR=0，接收所有标识符的标准数据帧。 */
   filter.FilterMaskIdLow = 0x0006U;
   filter.FilterActivation = ENABLE;
   filter.SlaveStartFilterBank = 14;
@@ -301,7 +301,7 @@ __weak void CAN_ReceiveCallback(CAN_HandleTypeDef *hcan,
                                 const CAN_RxHeaderTypeDef *header,
                                 const uint8_t *data)
 {
-  /* Override in application code to dispatch motor feedback. */
+  /* 在应用代码中重写此函数以分发电机反馈。 */
   UNUSED(hcan);
   UNUSED(header);
   UNUSED(data);

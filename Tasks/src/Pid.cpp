@@ -26,7 +26,7 @@ float Pid::calc(float ref, float fdb) {
     float err   = ref - fdb;
     float deriv = err - last_err_;
 
-    integ_ += err;   // sum(e(j))
+    integ_ += err;   // 累加误差 sum(e(j))
 
     float out = kp_ * err
               + ki_ * integ_ * kSampleTime

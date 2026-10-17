@@ -45,14 +45,14 @@ void MX_CAN2_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
-/* Call once after both MX_CANx_Init functions. */
+/* 两个 MX_CANx_Init 函数均执行完毕后调用一次。 */
 void CAN_Start(void);
-/* Nonblocking enqueue; HAL_OK means queued, HAL_BUSY means all mailboxes full.
- * Serialize callers on each bus (do not call concurrently from main and ISR). */
+/* 非阻塞入队；HAL_OK 表示已入队，HAL_BUSY 表示所有发送邮箱均已满。
+ * 同一总线上的调用须串行执行（不要在主循环与中断服务程序中并发调用）。 */
 HAL_StatusTypeDef CAN_SendStd(CAN_HandleTypeDef *hcan, uint16_t id,
                               const uint8_t *data, uint8_t length);
-/* Runs in RX interrupt context. Do not block; copy data before returning.
- * The default weak implementation discards frames. Override with C linkage. */
+/* 在接收中断上下文中执行。不得阻塞，需在返回前完成数据复制。
+ * 默认弱实现会丢弃帧；重写时须使用 C 链接方式。 */
 void CAN_ReceiveCallback(CAN_HandleTypeDef *hcan,
                          const CAN_RxHeaderTypeDef *header,
                          const uint8_t *data);

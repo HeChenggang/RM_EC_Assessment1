@@ -42,7 +42,7 @@ float Gm6020::angle() const {
 }
 
 float Gm6020::vel() const {
-    return raw_vel_rpm_ * kRpmToRadS;   // rpm -> rad/s
+    return raw_vel_rpm_ * kRpmToRadS;   // 将转速从每分钟转数（rpm）换算为弧度每秒（rad/s）
 }
 
 float Gm6020::current() const {

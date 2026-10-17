@@ -15,8 +15,8 @@ void ControlTaskInit(void);
 // 1kHz 控制入口, 在 TIM6 周期中断(HAL_TIM_PeriodElapsedCallback)中调用
 void MainTask(void);
 
-/* Ozone symbols: rpm, raw current command (16384 = 3 A), milliseconds.
- * Default disabled: set control_enabled=1 only when ready to run the motor. */
+/* Ozone 调试变量：转速单位为 rpm，电流指令使用原始值（16384 = 3 A），时间单位为毫秒。
+ * 默认禁用控制：仅在准备好运行电机后设置 control_enabled=1。 */
 extern volatile uint32_t control_enabled;
 extern volatile float position_target_deg;
 extern volatile float position_feedback_deg;
